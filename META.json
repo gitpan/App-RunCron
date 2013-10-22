@@ -64,7 +64,7 @@
    "provides" : {
       "App::RunCron" : {
          "file" : "lib/App/RunCron.pm",
-         "version" : "0.02"
+         "version" : "0.03"
       },
       "App::RunCron::CLI" : {
          "file" : "lib/App/RunCron/CLI.pm"
@@ -96,5 +96,5 @@
          "web" : "https://github.com/Songmu/p5-App-RunCron"
       }
    },
-   "version" : "0.02"
+   "version" : "0.03"
 }

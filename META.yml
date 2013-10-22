@@ -33,7 +33,7 @@ no_index:
 provides:
   App::RunCron:
     file: lib/App/RunCron.pm
-    version: 0.02
+    version: 0.03
   App::RunCron::CLI:
     file: lib/App/RunCron/CLI.pm
   App::RunCron::Reporter:
@@ -56,4 +56,4 @@ resources:
   bugtracker: https://github.com/Songmu/p5-App-RunCron/issues
   homepage: https://github.com/Songmu/p5-App-RunCron
   repository: git://github.com/Songmu/p5-App-RunCron.git
-version: 0.02
+version: 0.03
