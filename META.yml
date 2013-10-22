@@ -6,7 +6,9 @@ build_requires:
   Capture::Tiny: 0
   File::pushd: 0
   Test::Exit: 0
+  Test::Mock::Guard: 0
   Test::More: 0.98
+  Test::Tester: 0
 configure_requires:
   CPAN::Meta: 0
   CPAN::Meta::Prereqs: 0
@@ -31,7 +33,7 @@ no_index:
 provides:
   App::RunCron:
     file: lib/App/RunCron.pm
-    version: 0.01
+    version: 0.02
   App::RunCron::CLI:
     file: lib/App/RunCron/CLI.pm
   App::RunCron::Reporter:
@@ -42,6 +44,8 @@ provides:
     file: lib/App/RunCron/Reporter/None.pm
   App::RunCron::Reporter::Stdout:
     file: lib/App/RunCron/Reporter/Stdout.pm
+  Test::App::RunCron:
+    file: lib/Test/App/RunCron.pm
 requires:
   Class::Accessor::Lite: 0
   Time::Piece: 0
@@ -52,4 +56,4 @@ resources:
   bugtracker: https://github.com/Songmu/p5-App-RunCron/issues
   homepage: https://github.com/Songmu/p5-App-RunCron
   repository: git://github.com/Songmu/p5-App-RunCron.git
-version: 0.01
+version: 0.02

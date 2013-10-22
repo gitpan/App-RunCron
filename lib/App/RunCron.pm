@@ -3,7 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 use Fcntl       qw(SEEK_SET);
 use File::Temp  qw(tempfile);
@@ -149,22 +149,7 @@ sub _do_send_report {
             $reporter->($self);
         }
         else {
-            my @reporters;
-            if (ref $reporter && ref($reporter) eq 'ARRAY') {
-                my @stuffs = @$reporter;
-
-                while (@stuffs) {
-                    my $reporter_class = shift @stuffs;
-                    my $arg;
-                    if ($stuffs[0] && ref $stuffs[0]) {
-                        $arg = shift @stuffs;
-                    }
-                    push @reporters, [$reporter_class, $arg || ()];
-                }
-            }
-            else {
-                push @reporters, [$reporter];
-            }
+            my @reporters = _retrieve_reporters($reporter);
 
             for my $r (@reporters) {
                 my ($class, $arg) = @$r;
@@ -176,6 +161,27 @@ sub _do_send_report {
         warn $self->report;
         warn $err;
     }
+}
+
+sub _retrieve_reporters {
+    my $reporter = shift;
+    my @reporters;
+    if (ref $reporter && ref($reporter) eq 'ARRAY') {
+        my @stuffs = @$reporter;
+
+        while (@stuffs) {
+            my $reporter_class = shift @stuffs;
+            my $arg;
+            if ($stuffs[0] && ref $stuffs[0]) {
+                $arg = shift @stuffs;
+            }
+            push @reporters, [$reporter_class, $arg || ()];
+        }
+    }
+    else {
+        push @reporters, [$reporter];
+    }
+    @reporters;
 }
 
 sub _load_reporter {
@@ -300,11 +306,11 @@ If you want to load a plugin in your own name space, use the '+' character befor
 
 Running the job.
 
-=head3 C<< my $str  = $self->result_line >>
+=head3 C<< my $str = $self->result_line >>
 
 One line result string of the command.
 
-=head3 C<< my $str  = $self->report >>
+=head3 C<< my $str = $self->report >>
 
 Retrieve the output of the command.
 
@@ -312,15 +318,15 @@ Retrieve the output of the command.
 
 command is success or not.
 
-=head3 C<< my $int  = $self->exit_code >>
+=head3 C<< my $int = $self->exit_code >>
 
 same as C<$?>
 
-=head3 C<< my $int  = $self->child_exit_code >>
+=head3 C<< my $int = $self->child_exit_code >>
 
 exit code of child process.
 
-=head3 SEE ALSO
+=head1 SEE ALSO
 
 L<runcron>, L<cronlog|https://github.com/kazuho/kaztools/blob/master/cronlog>
 
