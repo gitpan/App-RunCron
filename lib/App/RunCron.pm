@@ -3,15 +3,16 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = "0.03";
+our $VERSION = "0.04";
 
 use Fcntl       qw(SEEK_SET);
 use File::Temp  qw(tempfile);
 use Time::HiRes qw/gettimeofday/;
+use Sys::Hostname;
 
 use Class::Accessor::Lite (
     new => 1,
-    ro  => [qw/timestamp command reporter error_reporter/],
+    ro  => [qw/timestamp command reporter error_reporter common_reporter/],
     rw  => [qw/logfile logpos exit_code _finished/],
 );
 
@@ -55,10 +56,7 @@ sub _run {
     pipe my $logrh, my $logwh or die "failed to create pipe:$!";
 
     # exec
-    $self->_log(
-        do { my $h = `hostname 2> /dev/null`; chomp $h; $h }
-        . ' starting: ' . join(' ', @{ $self->command }) . "\n",
-    );
+    $self->_log(hostname . ' starting: ' . join(' ', @{ $self->command }) . "\n");
     $self->exit_code(-1);
     unless (my $pid = fork) {
         if (defined $pid) {
@@ -86,8 +84,8 @@ sub _run {
     }
 
     # end
-    $self->_log($self->result_line. "\n");
     $self->_finished(1);
+    $self->_log($self->result_line. "\n");
 
     if ($self->is_success) {
         $self->_send_report;
@@ -97,17 +95,33 @@ sub _run {
     }
 }
 
-sub child_exit_code { shift->exit_code >> 8 }
-sub is_success      { shift->exit_code == 0 }
-sub result_line     {
+sub child_exit_code {
+    my $self = shift;
+    my $exit_code = $self->exit_code;
+    return $exit_code if !$exit_code || $exit_code < 0;
+
+    $self->exit_code >> 8;
+}
+
+sub child_signal {
+    my $self = shift;
+    my $exit_code = $self->exit_code;
+    return $exit_code if !$exit_code || $exit_code < 0;
+
+    $self->exit_code & 127;
+}
+
+sub is_success { shift->exit_code == 0 }
+
+sub result_line {
     my $self = shift;
     $self->{result_line} ||= do {
         my $exit_code = $self->exit_code;
         if ($exit_code == -1) {
             "failed to execute command:$!";
         }
-        elsif ($exit_code & 127) {
-            "command died with signal:" . ($exit_code & 127);
+        elsif ($self->child_signal) {
+            "command died with signal:" . $self->child_signal;
         }
         else {
             "command exited with code:" . $self->child_exit_code;
@@ -119,8 +133,8 @@ sub report {
     my $self = shift;
 
     $self->{report} ||= do {
-        open my $fh, '<', $self->logfile or die "failed to open @{[$self->logfile]}:$!";
-        seek $fh, $self->logpos, SEEK_SET      or die "failed to seek to the appropriate position in logfile:$!";
+        open my $fh, '<', $self->logfile  or die "failed to open @{[$self->logfile]}:$!";
+        seek $fh, $self->logpos, SEEK_SET or die "failed to seek to the appropriate position in logfile:$!";
         my $report = '';
         $report .= $_ while <$fh>;
         $report;
@@ -131,29 +145,32 @@ sub _send_report {
     my $self = shift;
 
     my $reporter = $self->reporter || 'None';
-    $self->_do_send_report($reporter);
+    $self->_do_send_report($reporter, $self->common_reporter || ());
 }
 
 sub _send_error_report {
     my $self = shift;
 
     my $reporter = $self->error_reporter || 'Stdout';
-    $self->_do_send_report($reporter);
+    $self->_do_send_report($reporter, $self->common_reporter || ());
 }
 
 sub _do_send_report {
-    my ($self, $reporter) = @_;
+    my ($self, @reporters) = @_;
 
     eval {
-        if (ref($reporter) && ref($reporter) eq 'CODE') {
-            $reporter->($self);
-        }
-        else {
-            my @reporters = _retrieve_reporters($reporter);
+        # XXX error handling
+        for my $reporter (@reporters) {
+            if (ref($reporter) && ref($reporter) eq 'CODE') {
+                $reporter->($self);
+            }
+            else {
+                my @reporters = _retrieve_reporters($reporter);
 
-            for my $r (@reporters) {
-                my ($class, $arg) = @$r;
-                _load_reporter($class)->new($arg || ())->run($self);
+                for my $r (@reporters) {
+                    my ($class, $arg) = @$r;
+                    _load_reporter($class)->new($arg || ())->run($self);
+                }
             }
         }
     };
@@ -278,9 +295,11 @@ If logfile is specified, stdout and stderr of the command will be logged to the 
 If not specified, the outputs will not be logged.
 The logfile can be a C<strftime> format. eg. '%Y-%m-%d.log'. (NOTICE: '%' must be escaped in crontab.)
 
-=head2 reporter|error_reporter
+=head2 reporter|error_reporter|common_reporter
 
-The reporter and error_reporter can be like following.
+C<common_reporter> is optional, processing after C<(error_)?reporter> is handled.
+
+The C<reporter>, C<error_reporter> and C<common_reporter> can be like following.
 
 =over
 
@@ -292,7 +311,7 @@ The reporter and error_reporter can be like following.
 
 =back
 
-I<$module_name> package name of the plugin. You can write it as two form like L<DBIx::Class>:
+I<$module_name> package name of the plugin. You can write it as two form like L<Plack::Middleware>:
 
     reporter => 'Stdout',    # => loads App::RunCron::Reporter::Stdout
 
@@ -325,6 +344,10 @@ same as C<$?>
 =head3 C<< my $int = $self->child_exit_code >>
 
 exit code of child process.
+
+=head3 C<< my $int = $self->child_signal >>
+
+signal number if chile process accepted a signal.
 
 =head1 SEE ALSO
 
