@@ -48,6 +48,9 @@
             "YAML::Tiny" : "0",
             "parent" : "0",
             "perl" : "5.008001"
+         },
+         "suggests" : {
+            "Fluent::Logger" : "0"
          }
       },
       "test" : {
@@ -64,7 +67,7 @@
    "provides" : {
       "App::RunCron" : {
          "file" : "lib/App/RunCron.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "App::RunCron::CLI" : {
          "file" : "lib/App/RunCron/CLI.pm"
@@ -74,6 +77,9 @@
       },
       "App::RunCron::Reporter::File" : {
          "file" : "lib/App/RunCron/Reporter/File.pm"
+      },
+      "App::RunCron::Reporter::Fluentd" : {
+         "file" : "lib/App/RunCron/Reporter/Fluentd.pm"
       },
       "App::RunCron::Reporter::None" : {
          "file" : "lib/App/RunCron/Reporter/None.pm"
@@ -96,5 +102,5 @@
          "web" : "https://github.com/Songmu/p5-App-RunCron"
       }
    },
-   "version" : "0.04"
+   "version" : "0.05"
 }

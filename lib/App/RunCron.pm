@@ -3,7 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 use Fcntl       qw(SEEK_SET);
 use File::Temp  qw(tempfile);
@@ -12,7 +12,7 @@ use Sys::Hostname;
 
 use Class::Accessor::Lite (
     new => 1,
-    ro  => [qw/timestamp command reporter error_reporter common_reporter/],
+    ro  => [qw/timestamp command reporter error_reporter common_reporter tag/],
     rw  => [qw/logfile logpos exit_code _finished/],
 );
 
@@ -48,6 +48,11 @@ sub run {
     }
 }
 
+sub command_str {
+    my $self = shift;
+    $self->{command_str} ||= join ' ', @{ $self->command };
+}
+
 sub _run {
     my $self = shift;
     die "no command specified" unless @{ $self->command };
@@ -56,7 +61,7 @@ sub _run {
     pipe my $logrh, my $logwh or die "failed to create pipe:$!";
 
     # exec
-    $self->_log(hostname . ' starting: ' . join(' ', @{ $self->command }) . "\n");
+    $self->_log(sprintf("%s tag:[%s] starting: %s\n", hostname, $self->tag || '', $self->command_str));
     $self->exit_code(-1);
     unless (my $pid = fork) {
         if (defined $pid) {
@@ -284,6 +289,10 @@ Default behaviour is same like L<cronlog|https://github.com/kazuho/kaztools/blob
 =head2 timestamp
 
 Add timestamp or not. (Default: undef)
+
+=head2 tag
+
+Identifier of the job name. (Optional)
 
 =head2 command
 
