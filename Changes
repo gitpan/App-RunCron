@@ -1,5 +1,9 @@
 Revision history for Perl extension App-RunCron
 
+0.06 2013-10-30T10:35:58Z
+    - fix test cases
+    - add `print` option (EXPERIMENTAL)
+
 0.05 2013-10-23T11:11:35Z
     - add Reporter::Fluentd (EXPERIMENTAL)
     - add `tag` option

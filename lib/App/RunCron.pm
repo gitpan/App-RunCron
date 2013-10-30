@@ -3,7 +3,7 @@ use 5.008001;
 use strict;
 use warnings;
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 use Fcntl       qw(SEEK_SET);
 use File::Temp  qw(tempfile);
@@ -12,7 +12,7 @@ use Sys::Hostname;
 
 use Class::Accessor::Lite (
     new => 1,
-    ro  => [qw/timestamp command reporter error_reporter common_reporter tag/],
+    ro  => [qw/timestamp command reporter error_reporter common_reporter tag print/],
     rw  => [qw/logfile logpos exit_code _finished/],
 );
 
@@ -82,8 +82,13 @@ sub _run {
     }
     else {
         close $logwh;
+        if ($self->print) {
+            require PerlIO::Util;
+            $self->_logfh->push_layer(tee => *STDOUT);
+        }
         $self->_log($_) while <$logrh>;
         close $logrh;
+        $self->_logfh->pop_layer if $self->print;
         while (wait == -1) {}
         $self->exit_code($?);
     }

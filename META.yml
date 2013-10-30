@@ -33,7 +33,7 @@ no_index:
 provides:
   App::RunCron:
     file: lib/App/RunCron.pm
-    version: 0.05
+    version: 0.06
   App::RunCron::CLI:
     file: lib/App/RunCron/CLI.pm
   App::RunCron::Reporter:
@@ -48,6 +48,8 @@ provides:
     file: lib/App/RunCron/Reporter/Stdout.pm
   Test::App::RunCron:
     file: lib/Test/App/RunCron.pm
+recommends:
+  PerlIO::Util: 0
 requires:
   Class::Accessor::Lite: 0
   Time::Piece: 0
@@ -58,4 +60,4 @@ resources:
   bugtracker: https://github.com/Songmu/p5-App-RunCron/issues
   homepage: https://github.com/Songmu/p5-App-RunCron
   repository: git://github.com/Songmu/p5-App-RunCron.git
-version: 0.05
+version: 0.06

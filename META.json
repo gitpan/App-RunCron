@@ -42,6 +42,9 @@
          }
       },
       "runtime" : {
+         "recommends" : {
+            "PerlIO::Util" : "0"
+         },
          "requires" : {
             "Class::Accessor::Lite" : "0",
             "Time::Piece" : "0",
@@ -67,7 +70,7 @@
    "provides" : {
       "App::RunCron" : {
          "file" : "lib/App/RunCron.pm",
-         "version" : "0.05"
+         "version" : "0.06"
       },
       "App::RunCron::CLI" : {
          "file" : "lib/App/RunCron/CLI.pm"
@@ -102,5 +105,5 @@
          "web" : "https://github.com/Songmu/p5-App-RunCron"
       }
    },
-   "version" : "0.05"
+   "version" : "0.06"
 }
