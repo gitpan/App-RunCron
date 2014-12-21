@@ -138,8 +138,75 @@ subtest 'invalid reporter' => sub {
     my ($stdout, $stderr) = capture { $runner->_run };
 
     ok !$stdout;
-    like $stderr, qr/Hello\ncommand exited with code:0\nOops!/;
+    like $stderr, qr/Oops/;
+    like $stderr, qr/Hello\ncommand exited with code:0/;
 
+    is $runner->exit_code, 0;
+};
+
+subtest 'announcer' => sub {
+    my $runner = App::RunCron->new(
+        command   => [$^X, '-e', qq[print "Hello\n"]],
+        announcer => sub {
+            my $r = shift;
+            print STDERR $r->pid;
+        },
+    );
+    my ($stdout, $stderr) = capture { $runner->_run };
+
+    ok !$stdout;
+    is $stderr, $$;
+
+    is $runner->exit_code, 0;
+};
+
+subtest 'invalid announcer' => sub {
+    my $runner = App::RunCron->new(
+        command   => [$^X, '-e', qq[print "Hello\n"]],
+        announcer => sub {
+            die 'Oops';
+        },
+        reporter => 'Stdout',
+    );
+    my ($stdout, $stderr) = capture { $runner->_run };
+
+    like $stdout, qr/Hello\ncommand exited with code:0$/;
+    like $stderr, qr/Oops/;
+
+    is $runner->exit_code, 0;
+};
+
+subtest 'command reporter' => sub {
+    subtest 'string' => sub {
+        my $runner = App::RunCron->new(
+            command   => [$^X, '-e', qq[print "Hello\n"]],
+            reporter => [Command => "$^X -e 'print while <>'"],
+        );
+        my ($stdout, $stderr) = capture { $runner->_run };
+
+        like $stdout, qr/command exited with code:0/;
+        is $runner->exit_code, 0;
+    };
+    subtest 'array' => sub {
+        my $runner = App::RunCron->new(
+            command   => [$^X, '-e', qq[print "Hello\n"]],
+            reporter => [Command => [$^X, '-e', 'print while <>']],
+        );
+        my ($stdout, $stderr) = capture { $runner->_run };
+
+        like $stdout, qr/command exited with code:0/;
+        is $runner->exit_code, 0;
+    };
+};
+
+subtest 'command announcer' => sub {
+    my $runner = App::RunCron->new(
+        command   => [$^X, '-e', qq[print "Hello\n"]],
+        announcer => [Command => [$^X, '-e', 'warn $_ while <>']],
+    );
+    my ($stdout, $stderr) = capture { $runner->_run };
+    ok !$stdout;
+    like $stderr, qr/$$/;
     is $runner->exit_code, 0;
 };
 
